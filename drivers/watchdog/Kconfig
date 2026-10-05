@@ -522,6 +522,19 @@ config AT91SAM9X_WATCHDOG
 	  Watchdog timer embedded into AT91SAM9X and AT91CAP9 chips. This will
 	  reboot your system when the timeout is reached.
 
+config SD5116_WATCHDOG
+	tristate "HiSilicon SD5116 watchdog"
+	depends on ARCH_HISI || COMPILE_TEST
+	depends on OF
+	select MFD_SYSCON
+	select WATCHDOG_CORE
+	help
+	  Watchdog driver for the HiSilicon SD5116 GPON SoC. The watchdog
+	  is started by the boot firmware and cannot be stopped.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called sd5116_wdt.
+
 config SAMA5D4_WATCHDOG
 	tristate "Atmel SAMA5D4 Watchdog Timer"
 	depends on ARCH_AT91 || COMPILE_TEST

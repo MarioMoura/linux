@@ -11896,6 +11896,13 @@ S:	Maintained
 F:	Documentation/devicetree/bindings/spi/hisilicon,sd5116-sfc.yaml
 F:	drivers/spi/spi-sd5116-sfc.c
 
+HISILICON SD5116 WATCHDOG DRIVER
+M:	Mario Moura <mm@mariomoura.com>
+L:	linux-watchdog@vger.kernel.org
+S:	Maintained
+F:	Documentation/devicetree/bindings/watchdog/hisilicon,sd5116-wdt.yaml
+F:	drivers/watchdog/sd5116_wdt.c
+
 HISILICON SPI Controller DRIVER FOR KUNPENG SOCS
 M:	Yang Shen <shenyang39@huawei.com>
 L:	linux-spi@vger.kernel.org
