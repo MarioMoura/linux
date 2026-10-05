@@ -60,6 +60,12 @@ properties:
         items:
           - const: hisilicon,hip07-d05
 
+      - description: SD5116 based boards
+        items:
+          - enum:
+              - fiberhome,an5506-01a
+          - const: hisilicon,sd5116
+
       - description: SD5203 based boards
         items:
           - const: H836ASDJ
