@@ -11889,6 +11889,13 @@ F:	drivers/crypto/hisilicon/sec2/sec_crypto.c
 F:	drivers/crypto/hisilicon/sec2/sec_crypto.h
 F:	drivers/crypto/hisilicon/sec2/sec_main.c
 
+HISILICON SD5116 SPI FLASH CONTROLLER DRIVER
+M:	Mario Moura <mm@mariomoura.com>
+L:	linux-spi@vger.kernel.org
+S:	Maintained
+F:	Documentation/devicetree/bindings/spi/hisilicon,sd5116-sfc.yaml
+F:	drivers/spi/spi-sd5116-sfc.c
+
 HISILICON SPI Controller DRIVER FOR KUNPENG SOCS
 M:	Yang Shen <shenyang39@huawei.com>
 L:	linux-spi@vger.kernel.org

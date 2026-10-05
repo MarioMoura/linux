@@ -1061,6 +1061,17 @@ config SPI_SH_HSPI
 	help
 	  SPI driver for SuperH HSPI blocks.
 
+config SPI_SD5116_SFC
+	tristate "HiSilicon SD5116 SPI flash controller"
+	depends on ARCH_HISI || COMPILE_TEST
+	depends on HAS_IOMEM && SPI_MEM
+	help
+	  This enables support for the SPI NOR flash controller (SFC300)
+	  in the HiSilicon SD5116 GPON SoC. It supports single-bit
+	  transfers through the controller's command interface.
+
+	  If unsure, say N.
+
 config SPI_SIFIVE
 	tristate "SiFive SPI controller"
 	depends on HAS_IOMEM
