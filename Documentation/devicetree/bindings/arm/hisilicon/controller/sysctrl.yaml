@@ -24,6 +24,7 @@ description: |
   HiP01     system controller   --> hisilicon,hip01-sysctrl
   Hi6220    system controller   --> hisilicon,hi6220-sysctrl
   Hi3519    system controller   --> hisilicon,hi3519-sysctrl
+  SD5116    system controller   --> hisilicon,sd5116-sysctrl
 
 allOf:
   - if:
@@ -47,6 +48,10 @@ properties:
       - items:
           - const: hisilicon,hip01-sysctrl
           - const: hisilicon,sysctrl
+      - items:
+          - const: hisilicon,sd5116-sysctrl
+          - const: syscon
+          - const: simple-mfd
 
   reg:
     maxItems: 1
@@ -81,6 +86,9 @@ properties:
     const: 1
 
   ranges: true
+
+  watchdog:
+    $ref: /schemas/watchdog/hisilicon,sd5116-wdt.yaml#
 
 patternProperties:
   '^clock@':
@@ -139,6 +147,17 @@ examples:
         compatible = "hisilicon,hi6220-sysctrl", "syscon";
         reg = <0xf7030000 0x2000>;
         #clock-cells = <1>;
+    };
+
+    /* SD5116 system controller */
+    system-controller@14880000 {
+        compatible = "hisilicon,sd5116-sysctrl", "syscon", "simple-mfd";
+        reg = <0x14880000 0x1000>;
+
+        watchdog {
+            compatible = "hisilicon,sd5116-wdt";
+            timeout-sec = <60>;
+        };
     };
 
     /* Hi3519 system controller */
