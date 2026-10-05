@@ -1,0 +1,115 @@
+// SPDX-License-Identifier: GPL-2.0-or-later OR MIT
+/*
+ * FiberHome AN5506-01-A GPON ONU
+ *
+ * Copyright (c) 2026 Mario Moura <mm@mariomoura.com>
+ */
+
+/dts-v1/;
+
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/input/input.h>
+#include <dt-bindings/leds/common.h>
+
+#include "sd5116.dtsi"
+
+/ {
+	model = "FiberHome AN5506-01-A";
+	compatible = "fiberhome,an5506-01a", "hisilicon,sd5116";
+
+	aliases {
+		serial1 = &uart1;
+	};
+
+	chosen {
+		stdout-path = "serial1:115200n8";
+	};
+
+	memory@80000000 {
+		device_type = "memory";
+		reg = <0x80000000 0x2000000>;
+	};
+
+	keys {
+		compatible = "gpio-keys-polled";
+		poll-interval = <100>;
+
+		button-light {
+			label = "light";
+			linux,code = <KEY_LIGHTS_TOGGLE>;
+			gpios = <&gpio0 13 GPIO_ACTIVE_LOW>;
+		};
+
+		button-reset {
+			label = "reset";
+			linux,code = <KEY_RESTART>;
+			gpios = <&gpio0 12 GPIO_ACTIVE_LOW>;
+		};
+	};
+
+	leds {
+		compatible = "gpio-leds";
+
+		led-los {
+			function = "los";
+			gpios = <&gpio0 11 GPIO_ACTIVE_LOW>;
+		};
+
+		led-power {
+			function = LED_FUNCTION_POWER;
+			gpios = <&gpio0 19 GPIO_ACTIVE_LOW>;
+			default-state = "on";
+		};
+
+		led-pon {
+			function = "pon";
+			gpios = <&gpio0 21 GPIO_ACTIVE_LOW>;
+		};
+	};
+};
+
+&sfc {
+	status = "okay";
+
+	flash@1 {
+		compatible = "jedec,spi-nor";
+		reg = <1>;
+		spi-max-frequency = <25000000>;
+
+		partitions {
+			compatible = "fixed-partitions";
+			#address-cells = <1>;
+			#size-cells = <1>;
+
+			partition@0 {
+				label = "u-boot";
+				reg = <0x0 0x40000>;
+				read-only;
+			};
+
+			partition@40000 {
+				label = "u-boot-env";
+				reg = <0x40000 0x40000>;
+			};
+
+			partition@80000 {
+				label = "firmware-a";
+				reg = <0x80000 0x400000>;
+			};
+
+			partition@480000 {
+				label = "firmware-b";
+				reg = <0x480000 0x400000>;
+			};
+
+			partition@880000 {
+				label = "data";
+				reg = <0x880000 0x780000>;
+			};
+		};
+	};
+};
+
+&uart1 {
+	status = "okay";
+};

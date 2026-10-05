@@ -9,5 +9,7 @@ dtb-$(CONFIG_ARCH_HISI) += \
 	hi3519-demb.dtb
 dtb-$(CONFIG_ARCH_HIX5HD2) += \
 	hisi-x5hd2-dkb.dtb
+dtb-$(CONFIG_ARCH_SD5116) += \
+	sd5116-fiberhome-an5506-01a.dtb
 dtb-$(CONFIG_ARCH_SD5203) += \
 	sd5203.dtb
