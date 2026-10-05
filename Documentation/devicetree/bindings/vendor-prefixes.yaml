@@ -604,6 +604,8 @@ patternProperties:
     description: Shenzhen Feixin Photoelectic Co., Ltd
   "^feiyang,.*":
     description: Shenzhen Fly Young Technology Co.,LTD.
+  "^fiberhome,.*":
+    description: FiberHome Telecommunication Technologies Co., Ltd.
   "^fii,.*":
     description: Foxconn Industrial Internet
   "^firefly,.*":
