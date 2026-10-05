@@ -55,6 +55,16 @@ config ARCH_HIX5HD2
 	help
 	  Support for Hisilicon HIX5HD2 SoC family
 
+config ARCH_SD5116
+	bool "Hisilicon SD5116 family (GPON ONU)"
+	depends on ARCH_MULTI_V7
+	select ARM_GLOBAL_TIMER
+	help
+	  Support for the Hisilicon SD5116 SoC family. The SD5116 is a
+	  single-core Cortex-A9 SoC with an integrated GPON MAC and L2
+	  switch, used in fiber optical network terminals such as the
+	  FiberHome AN5506-01-A.
+
 config ARCH_SD5203
 	bool "Hisilicon SD5203 family"
 	depends on ARCH_MULTI_V5
