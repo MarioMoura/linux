@@ -1,0 +1,58 @@
+# SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
+%YAML 1.2
+---
+$id: http://devicetree.org/schemas/spi/hisilicon,sd5116-sfc.yaml#
+$schema: http://devicetree.org/meta-schemas/core.yaml#
+
+title: HiSilicon SD5116 SPI Flash Controller (SFC300)
+
+maintainers:
+  - Mario Moura <mm@mariomoura.com>
+
+description:
+  SPI NOR flash controller found in the HiSilicon SD5116 GPON SoC. It
+  provides a command interface with a 64-byte data buffer and a
+  memory-mapped read window, and supports two chip selects.
+
+allOf:
+  - $ref: /schemas/spi/spi-controller.yaml#
+
+properties:
+  compatible:
+    const: hisilicon,sd5116-sfc
+
+  reg:
+    items:
+      - description: Controller registers
+      - description: Memory-mapped flash window
+
+  reg-names:
+    items:
+      - const: control
+      - const: memory
+
+  clocks:
+    maxItems: 1
+
+required:
+  - compatible
+  - reg
+  - reg-names
+
+unevaluatedProperties: false
+
+examples:
+  - |
+    spi@10a20000 {
+        compatible = "hisilicon,sd5116-sfc";
+        reg = <0x10a20000 0x1000>, <0x1c000000 0x1000000>;
+        reg-names = "control", "memory";
+        #address-cells = <1>;
+        #size-cells = <0>;
+
+        flash@1 {
+            compatible = "jedec,spi-nor";
+            reg = <1>;
+            spi-max-frequency = <25000000>;
+        };
+    };
