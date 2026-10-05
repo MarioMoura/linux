@@ -1,0 +1,35 @@
+# SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
+%YAML 1.2
+---
+$id: http://devicetree.org/schemas/watchdog/hisilicon,sd5116-wdt.yaml#
+$schema: http://devicetree.org/meta-schemas/core.yaml#
+
+title: HiSilicon SD5116 watchdog
+
+maintainers:
+  - Mario Moura <mm@mariomoura.com>
+
+description:
+  Watchdog timer in the HiSilicon SD5116 system controller. The boot
+  firmware starts it and it cannot be stopped. It must be a child node of
+  the "hisilicon,sd5116-sysctrl" system controller, whose registers it
+  uses.
+
+allOf:
+  - $ref: watchdog.yaml#
+
+properties:
+  compatible:
+    const: hisilicon,sd5116-wdt
+
+required:
+  - compatible
+
+unevaluatedProperties: false
+
+examples:
+  - |
+    watchdog {
+        compatible = "hisilicon,sd5116-wdt";
+        timeout-sec = <60>;
+    };
