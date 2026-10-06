@@ -130,7 +130,46 @@
 			status = "disabled";
 		};
 
-		system-controller@14880000 {
+		pie: ethernet@10a70000 {
+			compatible = "hisilicon,sd5116-pie";
+			reg = <0x10a70000 0x300>;
+			interrupts = <GIC_SPI 87 IRQ_TYPE_LEVEL_HIGH>;
+			status = "disabled";
+		};
+
+		switch: switch@11000000 {
+			compatible = "hisilicon,sd5116-switch";
+			reg = <0x11000000 0x1500000>, <0x14300000 0x300000>;
+			reg-names = "switch", "mac";
+			hisilicon,sysctrl = <&sysctrl>;
+			status = "disabled";
+
+			ethernet-ports {
+				#address-cells = <1>;
+				#size-cells = <0>;
+
+				ethernet-port@4 {
+					reg = <4>;
+					ethernet = <&pie>;
+					phy-mode = "internal";
+
+					fixed-link {
+						speed = <1000>;
+						full-duplex;
+					};
+				};
+			};
+		};
+
+		mdio: mdio@14600000 {
+			compatible = "hisilicon,sd5116-mdio";
+			reg = <0x14600000 0x20>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			status = "disabled";
+		};
+
+		sysctrl: system-controller@14880000 {
 			compatible = "hisilicon,sd5116-sysctrl", "syscon", "simple-mfd";
 			reg = <0x14880000 0x1000>;
 

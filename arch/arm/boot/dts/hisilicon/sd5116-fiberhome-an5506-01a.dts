@@ -73,6 +73,18 @@
 	status = "okay";
 };
 
+&mdio {
+	status = "okay";
+
+	ethphy0: ethernet-phy@1 {
+		reg = <1>;
+	};
+};
+
+&pie {
+	status = "okay";
+};
+
 &sfc {
 	status = "okay";
 
@@ -111,6 +123,19 @@
 				label = "data";
 				reg = <0x880000 0x780000>;
 			};
+		};
+	};
+};
+
+&switch {
+	status = "okay";
+
+	ethernet-ports {
+		ethernet-port@8 {
+			reg = <8>;
+			label = "lan";
+			phy-handle = <&ethphy0>;
+			phy-mode = "gmii";
 		};
 	};
 };
