@@ -10,3 +10,4 @@ obj-$(CONFIG_HNS) += hns/
 obj-$(CONFIG_HNS3) += hns3/
 obj-$(CONFIG_HISI_FEMAC) += hisi_femac.o
 obj-$(CONFIG_HIBMCGE) += hibmcge/
+obj-$(CONFIG_SD5116_PIE) += sd5116-pie.o

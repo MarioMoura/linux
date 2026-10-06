@@ -159,4 +159,15 @@ config HIBMCGE
 
 	  If you are unsure, say N.
 
+config SD5116_PIE
+	tristate "HiSilicon SD5116 PIE Ethernet support"
+	depends on ARCH_SD5116 || COMPILE_TEST
+	depends on HAS_IOMEM
+	help
+	  This enables the Packet Interface Engine (PIE) of the HiSilicon
+	  SD5116 SoC, the DMA engine connecting the CPU to the embedded
+	  switch. The switch itself is handled by the NET_DSA_SD5116 driver.
+
+	  To compile this driver as a module, choose M here.
+
 endif # NET_VENDOR_HISILICON
