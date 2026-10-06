@@ -1,0 +1,79 @@
+# SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
+%YAML 1.2
+---
+$id: http://devicetree.org/schemas/net/dsa/hisilicon,sd5116-switch.yaml#
+$schema: http://devicetree.org/meta-schemas/core.yaml#
+
+title: HiSilicon SD5116 embedded Ethernet switch
+
+maintainers:
+  - Mario Moura <mm@mariomoura.com>
+
+description:
+  The switch embedded in the HiSilicon SD5116 SoC has a PON port (0), a CPU
+  port (4) connected to the Packet Interface Engine, and Gigabit Ethernet
+  ports starting at 8, each with its own MAC. The switch registers are
+  directly mapped in the SoC's memory.
+
+allOf:
+  - $ref: dsa.yaml#/$defs/ethernet-ports
+
+properties:
+  compatible:
+    const: hisilicon,sd5116-switch
+
+  reg:
+    items:
+      - description: switch core registers
+      - description: Gigabit Ethernet MAC registers
+
+  reg-names:
+    items:
+      - const: switch
+      - const: mac
+
+  hisilicon,sysctrl:
+    $ref: /schemas/types.yaml#/definitions/phandle
+    description:
+      System controller holding the switch datapath reset.
+
+required:
+  - compatible
+  - reg
+  - reg-names
+  - hisilicon,sysctrl
+  - ethernet-ports
+
+unevaluatedProperties: false
+
+examples:
+  - |
+    switch@11000000 {
+        compatible = "hisilicon,sd5116-switch";
+        reg = <0x11000000 0x1500000>, <0x14300000 0x300000>;
+        reg-names = "switch", "mac";
+        hisilicon,sysctrl = <&sysctrl>;
+
+        ethernet-ports {
+            #address-cells = <1>;
+            #size-cells = <0>;
+
+            ethernet-port@4 {
+                reg = <4>;
+                ethernet = <&pie>;
+                phy-mode = "internal";
+
+                fixed-link {
+                    speed = <1000>;
+                    full-duplex;
+                };
+            };
+
+            ethernet-port@8 {
+                reg = <8>;
+                label = "lan";
+                phy-handle = <&ethphy0>;
+                phy-mode = "gmii";
+            };
+        };
+    };
