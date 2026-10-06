@@ -1,0 +1,45 @@
+# SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
+%YAML 1.2
+---
+$id: http://devicetree.org/schemas/net/hisilicon,sd5116-pie.yaml#
+$schema: http://devicetree.org/meta-schemas/core.yaml#
+
+title: HiSilicon SD5116 Packet Interface Engine
+
+maintainers:
+  - Mario Moura <mm@mariomoura.com>
+
+description:
+  The Packet Interface Engine (PIE) is the DMA engine between the CPU and the
+  CPU port of the SD5116 embedded switch. It is used as the conduit interface
+  of that switch.
+
+allOf:
+  - $ref: ethernet-controller.yaml#
+
+properties:
+  compatible:
+    const: hisilicon,sd5116-pie
+
+  reg:
+    maxItems: 1
+
+  interrupts:
+    maxItems: 1
+
+required:
+  - compatible
+  - reg
+  - interrupts
+
+unevaluatedProperties: false
+
+examples:
+  - |
+    #include <dt-bindings/interrupt-controller/arm-gic.h>
+
+    ethernet@10a70000 {
+        compatible = "hisilicon,sd5116-pie";
+        reg = <0x10a70000 0x300>;
+        interrupts = <GIC_SPI 87 IRQ_TYPE_LEVEL_HIGH>;
+    };
