@@ -143,3 +143,10 @@
 &uart1 {
 	status = "okay";
 };
+
+/* LOCAL: bring-up bootargs */
+/ {
+	chosen {
+		bootargs = "console=ttyS1,115200 earlycon";
+	};
+};
