@@ -194,6 +194,14 @@ config NET_DSA_TAG_LAN9303
 	  Say Y or M if you want to enable support for tagging frames for the
 	  SMSC/Microchip LAN9303 family of switches.
 
+config NET_DSA_TAG_SD5116_8021Q
+	tristate "Tag driver for HiSilicon SD5116 switch, using VLAN"
+	help
+	  Say Y or M if you want to enable support for tagging frames for
+	  the switch embedded in the HiSilicon SD5116 SoC. The switch has no
+	  CPU tag, so the user ports are told apart by tag_8021q VLAN
+	  headers.
+
 config NET_DSA_TAG_SJA1105
 	tristate "Tag driver for NXP SJA1105 switches"
 	select PACKING
