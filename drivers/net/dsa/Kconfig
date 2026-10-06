@@ -107,6 +107,17 @@ config NET_DSA_RZN1_A5PSW
 	  This driver supports the A5PSW switch, which is embedded in Renesas
 	  RZ/N1 SoC.
 
+config NET_DSA_SD5116
+	tristate "HiSilicon SD5116 embedded switch support"
+	depends on OF && (ARCH_SD5116 || COMPILE_TEST)
+	select MFD_SYSCON
+	select NET_DSA_TAG_SD5116_8021Q
+	help
+	  This enables support for the Ethernet switch embedded in the
+	  HiSilicon SD5116 SoC. Its CPU port is connected to the PIE DMA
+	  engine (SD5116_PIE) and its Gigabit Ethernet ports become
+	  standalone network interfaces.
+
 config NET_DSA_KS8995
 	tristate "Micrel KS8995 family 5-ports 10/100 Ethernet switches"
 	depends on SPI
