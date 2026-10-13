@@ -100,6 +100,84 @@
 #define GE_MODE_UPDATE		0x18
 #define GE_MODE_UPDATE_EN	BIT(0)
 
+/* 64-bit MAC counters, low word first */
+#define GE_CNT_RX_TOTAL		0x400
+#define GE_CNT_RX_UC		0x408
+#define GE_CNT_RX_MC		0x410
+#define GE_CNT_RX_BC		0x418
+#define GE_CNT_RX_PAUSE		0x420
+#define GE_CNT_RX_OVER_2000	0x478
+#define GE_CNT_RX_UNDERSIZE	0x480
+#define GE_CNT_RX_FRAG		0x488
+#define GE_CNT_RX_JABBER	0x498
+#define GE_CNT_RX_FCS_ERR	0x4a0
+#define GE_CNT_RX_ALIGN_ERR	0x4a8
+#define GE_CNT_RX_FIFO_OVERRUN	0x4b0
+#define GE_CNT_RX_BYTE_OK	0x4c0
+#define GE_CNT_TX		0x4d0
+#define GE_CNT_TX_MC		0x4e0
+#define GE_CNT_TX_SINGLE_COL	0x548
+#define GE_CNT_TX_MULTI_COL	0x550
+#define GE_CNT_TX_EXCESS_COL	0x558
+#define GE_CNT_TX_LATE_COL	0x560
+#define GE_CNT_TX_CRS_LOST	0x570
+#define GE_CNT_TX_FIFO_UNDERRUN	0x580
+#define GE_CNT_TX_BYTE_OK	0x588
+
+struct sd5116_mib {
+	u16 offset;
+	const char *name;
+};
+
+static const struct sd5116_mib sd5116_mibs[] = {
+	{ GE_CNT_RX_TOTAL, "rx_total" },
+	{ GE_CNT_RX_UC, "rx_uc" },
+	{ GE_CNT_RX_MC, "rx_mc" },
+	{ GE_CNT_RX_BC, "rx_bc" },
+	{ GE_CNT_RX_PAUSE, "rx_pause" },
+	{ 0x430, "rx_miu" },
+	{ 0x438, "rx_miu_to_63" },
+	{ 0x440, "rx_64" },
+	{ 0x448, "rx_65_to_127" },
+	{ 0x450, "rx_128_to_255" },
+	{ 0x458, "rx_256_to_511" },
+	{ 0x460, "rx_512_to_1023" },
+	{ 0x468, "rx_1024_to_1518" },
+	{ 0x470, "rx_1519_to_2000" },
+	{ GE_CNT_RX_OVER_2000, "rx_over_2000" },
+	{ GE_CNT_RX_UNDERSIZE, "rx_undersize" },
+	{ GE_CNT_RX_FRAG, "rx_frag" },
+	{ GE_CNT_RX_JABBER, "rx_jabber" },
+	{ GE_CNT_RX_FCS_ERR, "rx_fcs_err" },
+	{ GE_CNT_RX_ALIGN_ERR, "rx_align_err" },
+	{ GE_CNT_RX_FIFO_OVERRUN, "rx_fifo_overrun" },
+	{ GE_CNT_RX_BYTE_OK, "rx_byte_ok" },
+	{ 0x4c8, "rx_byte_err" },
+	{ GE_CNT_TX, "tx" },
+	{ 0x4d8, "tx_uc" },
+	{ GE_CNT_TX_MC, "tx_mc" },
+	{ 0x4e8, "tx_bc" },
+	{ 0x4f0, "tx_pause" },
+	{ 0x4f8, "tx_miu_to_63" },
+	{ 0x500, "tx_64" },
+	{ 0x508, "tx_65_to_127" },
+	{ 0x510, "tx_128_to_255" },
+	{ 0x518, "tx_256_to_511" },
+	{ 0x520, "tx_512_to_1023" },
+	{ 0x528, "tx_1024_to_1518" },
+	{ 0x530, "tx_1519_to_2000" },
+	{ 0x538, "tx_over_2000" },
+	{ GE_CNT_TX_SINGLE_COL, "tx_single_col" },
+	{ GE_CNT_TX_MULTI_COL, "tx_multi_col" },
+	{ GE_CNT_TX_EXCESS_COL, "tx_excess_col" },
+	{ GE_CNT_TX_LATE_COL, "tx_late_col" },
+	{ 0x568, "tx_deferral" },
+	{ GE_CNT_TX_CRS_LOST, "tx_crs_lost" },
+	{ GE_CNT_TX_FIFO_UNDERRUN, "tx_fifo_underrun" },
+	{ GE_CNT_TX_BYTE_OK, "tx_byte_ok" },
+	{ 0x590, "tx_byte_err" },
+};
+
 struct sd5116_vlan {
 	u16 vid;
 	u16 members;
@@ -469,6 +547,84 @@ static void sd5116_mac_link_up(struct phylink_config *config,
 	       mac + GE_MODE_UPDATE);
 }
 
+static u64 sd5116_read_cnt(struct sd5116_switch *sw, int port, u16 offset)
+{
+	void __iomem *reg = sw->mac + GE_MAC(port) + offset;
+	u32 hi, lo;
+
+	do {
+		hi = readl(reg + 4);
+		lo = readl(reg);
+	} while (hi != readl(reg + 4));
+
+	return (u64)hi << 32 | lo;
+}
+
+static int sd5116_get_sset_count(struct dsa_switch *ds, int port, int sset)
+{
+	if (sset != ETH_SS_STATS || port < SD5116_FIRST_GE_PORT)
+		return 0;
+
+	return ARRAY_SIZE(sd5116_mibs);
+}
+
+static void sd5116_get_strings(struct dsa_switch *ds, int port, u32 stringset,
+			       u8 *data)
+{
+	int i;
+
+	if (stringset != ETH_SS_STATS || port < SD5116_FIRST_GE_PORT)
+		return;
+
+	for (i = 0; i < ARRAY_SIZE(sd5116_mibs); i++)
+		ethtool_puts(&data, sd5116_mibs[i].name);
+}
+
+static void sd5116_get_ethtool_stats(struct dsa_switch *ds, int port, u64 *data)
+{
+	struct sd5116_switch *sw = ds->priv;
+	int i;
+
+	if (port < SD5116_FIRST_GE_PORT)
+		return;
+
+	for (i = 0; i < ARRAY_SIZE(sd5116_mibs); i++)
+		data[i] = sd5116_read_cnt(sw, port, sd5116_mibs[i].offset);
+}
+
+static void sd5116_get_stats64(struct dsa_switch *ds, int port,
+			       struct rtnl_link_stats64 *s)
+{
+	struct sd5116_switch *sw = ds->priv;
+
+	if (port < SD5116_FIRST_GE_PORT)
+		return;
+
+#define CNT(x) sd5116_read_cnt(sw, port, GE_CNT_##x)
+	/* the total includes frames over 2000 bytes, which are dropped */
+	s->rx_packets = CNT(RX_TOTAL) - CNT(RX_OVER_2000);
+	s->rx_bytes = CNT(RX_BYTE_OK);
+	s->multicast = CNT(RX_MC);
+	s->rx_crc_errors = CNT(RX_FCS_ERR);
+	s->rx_frame_errors = CNT(RX_ALIGN_ERR);
+	s->rx_length_errors = CNT(RX_UNDERSIZE) + CNT(RX_FRAG) +
+			      CNT(RX_JABBER) + CNT(RX_OVER_2000);
+	s->rx_fifo_errors = CNT(RX_FIFO_OVERRUN);
+	s->rx_errors = s->rx_crc_errors + s->rx_frame_errors +
+		       s->rx_length_errors + s->rx_fifo_errors;
+
+	s->tx_packets = CNT(TX);
+	s->tx_bytes = CNT(TX_BYTE_OK);
+	s->collisions = CNT(TX_SINGLE_COL) + CNT(TX_MULTI_COL);
+	s->tx_aborted_errors = CNT(TX_EXCESS_COL);
+	s->tx_window_errors = CNT(TX_LATE_COL);
+	s->tx_carrier_errors = CNT(TX_CRS_LOST);
+	s->tx_fifo_errors = CNT(TX_FIFO_UNDERRUN);
+	s->tx_errors = s->tx_aborted_errors + s->tx_window_errors +
+		       s->tx_carrier_errors + s->tx_fifo_errors;
+#undef CNT
+}
+
 static const struct phylink_mac_ops sd5116_phylink_mac_ops = {
 	.mac_config	= sd5116_mac_config,
 	.mac_link_down	= sd5116_mac_link_down,
@@ -482,6 +638,10 @@ static const struct dsa_switch_ops sd5116_switch_ops = {
 	.phylink_get_caps	= sd5116_phylink_get_caps,
 	.tag_8021q_vlan_add	= sd5116_tag_8021q_vlan_add,
 	.tag_8021q_vlan_del	= sd5116_tag_8021q_vlan_del,
+	.get_sset_count		= sd5116_get_sset_count,
+	.get_strings		= sd5116_get_strings,
+	.get_ethtool_stats	= sd5116_get_ethtool_stats,
+	.get_stats64		= sd5116_get_stats64,
 };
 
 static int sd5116_probe(struct platform_device *pdev)
