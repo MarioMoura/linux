@@ -28,6 +28,8 @@
 #define SD5116_CPU_PORT		4
 #define SD5116_FIRST_GE_PORT	8
 #define SD5116_NUM_VLANS	8
+/* the vendor limit, frame check sequence included */
+#define SD5116_MAX_FRAME	2000
 
 /* system controller */
 #define SYSCTRL_DP_RST		0x30
@@ -107,6 +109,8 @@
 #define GE_MODE_UPDATE		0x18
 #define GE_MODE_UPDATE_EN	BIT(0)
 #define GE_PORT_EN		0x1c
+#define GE_MAX_FRAME		0x100
+#define GE_MAX_FRAME_LEN	GENMASK(13, 0)
 
 /* 64-bit MAC counters, low word first */
 #define GE_CNT_RX_TOTAL		0x400
@@ -591,6 +595,26 @@ static void sd5116_mac_link_up(struct phylink_config *config,
 	sd5116_ge_update(sw, dp->index, GE_PORT_EN, 1);
 }
 
+static int sd5116_port_change_mtu(struct dsa_switch *ds, int port, int new_mtu)
+{
+	struct sd5116_switch *sw = ds->priv;
+	void __iomem *reg = sw->mac + GE_MAC(port) + GE_MAX_FRAME;
+
+	if (port < SD5116_FIRST_GE_PORT)
+		return 0;
+
+	writel((readl(reg) & ~GE_MAX_FRAME_LEN) |
+	       FIELD_PREP(GE_MAX_FRAME_LEN,
+			  new_mtu + VLAN_ETH_HLEN + ETH_FCS_LEN), reg);
+
+	return 0;
+}
+
+static int sd5116_port_max_mtu(struct dsa_switch *ds, int port)
+{
+	return SD5116_MAX_FRAME - VLAN_ETH_HLEN - ETH_FCS_LEN;
+}
+
 static u64 sd5116_read_cnt(struct sd5116_switch *sw, int port, u16 offset)
 {
 	void __iomem *reg = sw->mac + GE_MAC(port) + offset;
@@ -686,6 +710,8 @@ static const struct dsa_switch_ops sd5116_switch_ops = {
 	.get_strings		= sd5116_get_strings,
 	.get_ethtool_stats	= sd5116_get_ethtool_stats,
 	.get_stats64		= sd5116_get_stats64,
+	.port_change_mtu	= sd5116_port_change_mtu,
+	.port_max_mtu		= sd5116_port_max_mtu,
 };
 
 static int sd5116_probe(struct platform_device *pdev)
