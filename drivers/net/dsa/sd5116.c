@@ -57,6 +57,13 @@
 #define CPU_QUEUE_PROFILE	0x1a
 #define QUEUE_EN		BIT(7)
 
+/* flow control of a GE port, n = port - SD5116_FIRST_GE_PORT */
+#define IPS_FC_CTRL		0x0080104
+#define FAM_FC(n)		(0x0100010 + (n) * 4)
+#define FAM_FC_EN		BIT(31)
+#define FAM_FC_XOFF		GENMASK(29, 16)
+#define FAM_FC_XON		GENMASK(13, 0)
+
 #define IFC_ACT(n)		(0x1150000 + (n) * 0x10)
 #define OPP_POLICER		0x1440040
 #define OPP_QMAP(row)		(0x1442800 + (row) * 0x20)
@@ -507,8 +514,31 @@ static void sd5116_phylink_get_caps(struct dsa_switch *ds, int port,
 	} else if (port >= SD5116_FIRST_GE_PORT) {
 		__set_bit(PHY_INTERFACE_MODE_GMII,
 			  config->supported_interfaces);
-		config->mac_capabilities = MAC_10 | MAC_100 | MAC_1000;
+		config->mac_capabilities = MAC_SYM_PAUSE | MAC_10 | MAC_100 |
+					   MAC_1000;
 	}
+}
+
+/* bit 1 for the first GE port, then bit 9 and every 4 bits (vendor layout) */
+static u32 sd5116_ips_fc_en(int n)
+{
+	return BIT(n ? n * 4 + 5 : 1);
+}
+
+/* thresholds are the vendor defaults */
+static void sd5116_set_flow_control(struct sd5116_switch *sw, int port,
+				    bool enable)
+{
+	int n = port - SD5116_FIRST_GE_PORT;
+	u32 val;
+
+	writel((enable ? FAM_FC_EN : 0) | FIELD_PREP(FAM_FC_XOFF, 250) |
+	       FIELD_PREP(FAM_FC_XON, 50), sw->base + FAM_FC(n));
+
+	val = readl(sw->base + IPS_FC_CTRL) & ~sd5116_ips_fc_en(n);
+	if (enable)
+		val |= sd5116_ips_fc_en(n);
+	writel(val, sw->base + IPS_FC_CTRL);
 }
 
 static void sd5116_mac_config(struct phylink_config *config, unsigned int mode,
@@ -545,6 +575,8 @@ static void sd5116_mac_link_up(struct phylink_config *config,
 	writel(val, mac + GE_MODE);
 	writel(readl(mac + GE_MODE_UPDATE) & ~GE_MODE_UPDATE_EN,
 	       mac + GE_MODE_UPDATE);
+
+	sd5116_set_flow_control(sw, dp->index, tx_pause);
 }
 
 static u64 sd5116_read_cnt(struct sd5116_switch *sw, int port, u16 offset)
