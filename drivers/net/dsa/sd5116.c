@@ -106,6 +106,7 @@
 #define GE_MODE_FULL_DUPLEX	BIT(2)
 #define GE_MODE_UPDATE		0x18
 #define GE_MODE_UPDATE_EN	BIT(0)
+#define GE_PORT_EN		0x1c
 
 /* 64-bit MAC counters, low word first */
 #define GE_CNT_RX_TOTAL		0x400
@@ -546,9 +547,26 @@ static void sd5116_mac_config(struct phylink_config *config, unsigned int mode,
 {
 }
 
+/* GE_MODE and GE_PORT_EN only take writes while updates are enabled */
+static void sd5116_ge_update(struct sd5116_switch *sw, int port, u16 reg,
+			     u32 val)
+{
+	void __iomem *mac = sw->mac + GE_MAC(port);
+
+	writel(readl(mac + GE_MODE_UPDATE) | GE_MODE_UPDATE_EN,
+	       mac + GE_MODE_UPDATE);
+	writel(val, mac + reg);
+	writel(readl(mac + GE_MODE_UPDATE) & ~GE_MODE_UPDATE_EN,
+	       mac + GE_MODE_UPDATE);
+}
+
 static void sd5116_mac_link_down(struct phylink_config *config,
 				 unsigned int mode, phy_interface_t interface)
 {
+	struct dsa_port *dp = dsa_phylink_to_port(config);
+
+	if (dp->index >= SD5116_FIRST_GE_PORT)
+		sd5116_ge_update(dp->ds->priv, dp->index, GE_PORT_EN, 0);
 }
 
 static void sd5116_mac_link_up(struct phylink_config *config,
@@ -558,25 +576,19 @@ static void sd5116_mac_link_up(struct phylink_config *config,
 {
 	struct dsa_port *dp = dsa_phylink_to_port(config);
 	struct sd5116_switch *sw = dp->ds->priv;
-	void __iomem *mac;
 	u32 val;
 
 	if (dp->index < SD5116_FIRST_GE_PORT)
 		return;
 
-	mac = sw->mac + GE_MAC(dp->index);
 	val = FIELD_PREP(GE_MODE_SPEED, speed == SPEED_1000 ? 2 :
 					speed == SPEED_100 ? 1 : 0);
 	if (duplex == DUPLEX_FULL)
 		val |= GE_MODE_FULL_DUPLEX;
 
-	writel(readl(mac + GE_MODE_UPDATE) | GE_MODE_UPDATE_EN,
-	       mac + GE_MODE_UPDATE);
-	writel(val, mac + GE_MODE);
-	writel(readl(mac + GE_MODE_UPDATE) & ~GE_MODE_UPDATE_EN,
-	       mac + GE_MODE_UPDATE);
-
+	sd5116_ge_update(sw, dp->index, GE_MODE, val);
 	sd5116_set_flow_control(sw, dp->index, tx_pause);
+	sd5116_ge_update(sw, dp->index, GE_PORT_EN, 1);
 }
 
 static u64 sd5116_read_cnt(struct sd5116_switch *sw, int port, u16 offset)
