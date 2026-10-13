@@ -19,7 +19,9 @@
 #include <linux/netdevice.h>
 #include <linux/of_net.h>
 #include <linux/platform_device.h>
+#include <linux/rtnetlink.h>
 #include <linux/sizes.h>
+#include <linux/workqueue.h>
 
 #define PIE_CTRL		0x000
 #define PIE_CTRL_EN		BIT(0)
@@ -67,6 +69,7 @@ struct sd5116_pie {
 	struct device *dev;
 	struct net_device *ndev;
 	struct napi_struct napi;
+	struct work_struct reset_work;
 
 	struct pie_desc *tx_ring;
 	dma_addr_t tx_ring_dma;
@@ -324,10 +327,53 @@ static int sd5116_pie_stop(struct net_device *ndev)
 	return 0;
 }
 
+static void sd5116_pie_reset_work(struct work_struct *work)
+{
+	struct sd5116_pie *pie = container_of(work, struct sd5116_pie,
+					      reset_work);
+	struct net_device *ndev = pie->ndev;
+	int ret;
+
+	rtnl_lock();
+	if (!netif_running(ndev))
+		goto out;
+
+	netif_tx_disable(ndev);
+	writel(PIE_IRQ_ALL, pie->base + PIE_IRQ_MASK);
+	napi_disable(&pie->napi);
+	ret = sd5116_pie_hw_start(pie);
+	napi_enable(&pie->napi);
+	if (ret) {
+		/* the queue stays stopped, so the watchdog retries */
+		netdev_err(ndev, "restart failed: %d\n", ret);
+		goto out;
+	}
+	writel(PIE_IRQ_ALL & ~(PIE_IRQ_RX | PIE_IRQ_TX),
+	       pie->base + PIE_IRQ_MASK);
+	netif_wake_queue(ndev);
+out:
+	rtnl_unlock();
+}
+
+static void sd5116_pie_tx_timeout(struct net_device *ndev, unsigned int txqueue)
+{
+	struct sd5116_pie *pie = netdev_priv(ndev);
+
+	schedule_work(&pie->reset_work);
+}
+
+static void sd5116_pie_cancel_reset(void *data)
+{
+	struct sd5116_pie *pie = data;
+
+	cancel_work_sync(&pie->reset_work);
+}
+
 static const struct net_device_ops sd5116_pie_netdev_ops = {
 	.ndo_open		= sd5116_pie_open,
 	.ndo_stop		= sd5116_pie_stop,
 	.ndo_start_xmit		= sd5116_pie_xmit,
+	.ndo_tx_timeout		= sd5116_pie_tx_timeout,
 	.ndo_set_mac_address	= eth_mac_addr,
 	.ndo_validate_addr	= eth_validate_addr,
 };
@@ -379,6 +425,12 @@ static int sd5116_pie_probe(struct platform_device *pdev)
 	ndev->netdev_ops = &sd5116_pie_netdev_ops;
 	ndev->max_mtu = TX_BUF_SIZE - ETH_HLEN - ETH_FCS_LEN;
 	netif_napi_add(ndev, &pie->napi, sd5116_pie_poll);
+
+	/* released after the netdev is unregistered, so no reset can follow */
+	INIT_WORK(&pie->reset_work, sd5116_pie_reset_work);
+	ret = devm_add_action_or_reset(dev, sd5116_pie_cancel_reset, pie);
+	if (ret)
+		return ret;
 
 	return devm_register_netdev(dev, ndev);
 }
