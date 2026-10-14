@@ -109,6 +109,7 @@
 #define GE_MODE_UPDATE		0x18
 #define GE_MODE_UPDATE_EN	BIT(0)
 #define GE_PORT_EN		0x1c
+#define GE_RX_PAUSE_EN		0x50
 #define GE_MAX_FRAME		0x100
 #define GE_MAX_FRAME_LEN	GENMASK(13, 0)
 
@@ -592,6 +593,7 @@ static void sd5116_mac_link_up(struct phylink_config *config,
 
 	sd5116_ge_update(sw, dp->index, GE_MODE, val);
 	sd5116_set_flow_control(sw, dp->index, tx_pause);
+	writel(rx_pause, sw->mac + GE_MAC(dp->index) + GE_RX_PAUSE_EN);
 	sd5116_ge_update(sw, dp->index, GE_PORT_EN, 1);
 }
 
