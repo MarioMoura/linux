@@ -30,6 +30,17 @@ config COMMON_CLK_HI3559A
 	help
 	  Build the clock driver for hi3559a.
 
+config COMMON_CLK_SD5116
+	tristate "SD5116 Clock Driver"
+	depends on ARCH_HISI || COMPILE_TEST
+	select MFD_SYSCON
+	default ARCH_HISI
+	help
+	  Build the clock gate driver for the HiSilicon SD5116 GPON SoC.
+	  The gates live in the system controller and switch the clocks
+	  of on-chip peripherals such as the I2C controller. Say Y or M
+	  if you are building a kernel for an SD5116 based board.
+
 config COMMON_CLK_HI3660
 	bool "Hi3660 Clock Driver"
 	depends on ARCH_HISI || COMPILE_TEST
