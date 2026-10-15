@@ -5,6 +5,7 @@
  * Copyright (c) 2026 Mario Moura <mm@mariomoura.com>
  */
 
+#include <dt-bindings/clock/hisilicon,sd5116-clock.h>
 #include <dt-bindings/interrupt-controller/arm-gic.h>
 
 / {
@@ -80,6 +81,19 @@
 			status = "disabled";
 		};
 
+		i2c0: i2c@10111000 {
+			compatible = "snps,designware-i2c";
+			reg = <0x10111000 0x1000>;
+			interrupts = <GIC_SPI 44 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&clkc SD5116_CLK_I2C>;
+			clock-frequency = <100000>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&i2c0_pins>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			status = "disabled";
+		};
+
 		scu@10180000 {
 			compatible = "arm,cortex-a9-scu";
 			reg = <0x10180000 0x100>;
@@ -120,8 +134,28 @@
 			compatible = "hisilicon,sd5116-sysctrl", "syscon", "simple-mfd";
 			reg = <0x14880000 0x1000>;
 
+			clkc: clock-controller {
+				compatible = "hisilicon,sd5116-clk";
+				clocks = <&apb_clk>;
+				#clock-cells = <1>;
+			};
+
 			watchdog {
 				compatible = "hisilicon,sd5116-wdt";
+			};
+		};
+
+		pinmux: pinmux@14900200 {
+			compatible = "pinctrl-single";
+			reg = <0x14900200 0x4>;
+			#pinctrl-cells = <2>;
+			pinctrl-single,bit-per-mux;
+			pinctrl-single,register-width = <32>;
+			pinctrl-single,function-mask = <0x1>;
+
+			/* SCL and SDA: 0 selects I2C, 1 GPIO */
+			i2c0_pins: i2c0-pins {
+				pinctrl-single,bits = <0x0 0x0 0x3>;
 			};
 		};
 	};

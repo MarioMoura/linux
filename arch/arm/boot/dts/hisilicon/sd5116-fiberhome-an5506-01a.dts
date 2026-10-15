@@ -68,6 +68,11 @@
 	};
 };
 
+&i2c0 {
+	/* Semtech GN25L95 PON transceiver: ID at 0x50, diagnostics at 0x51 */
+	status = "okay";
+};
+
 &sfc {
 	status = "okay";
 
