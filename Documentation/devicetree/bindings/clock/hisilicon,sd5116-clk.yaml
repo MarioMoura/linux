@@ -1,0 +1,43 @@
+# SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
+%YAML 1.2
+---
+$id: http://devicetree.org/schemas/clock/hisilicon,sd5116-clk.yaml#
+$schema: http://devicetree.org/meta-schemas/core.yaml#
+
+title: HiSilicon SD5116 clock gates
+
+maintainers:
+  - Mario Moura <mm@mariomoura.com>
+
+description: |
+  Peripheral clock gates in the HiSilicon SD5116 system controller. It must
+  be a child node of the "hisilicon,sd5116-sysctrl" system controller, whose
+  registers it uses.
+
+  See include/dt-bindings/clock/hisilicon,sd5116-clock.h for the clock IDs.
+
+properties:
+  compatible:
+    const: hisilicon,sd5116-clk
+
+  clocks:
+    maxItems: 1
+    description: Bus clock feeding the gated peripherals
+
+  '#clock-cells':
+    const: 1
+
+required:
+  - compatible
+  - clocks
+  - '#clock-cells'
+
+additionalProperties: false
+
+examples:
+  - |
+    clock-controller {
+        compatible = "hisilicon,sd5116-clk";
+        clocks = <&apb_clk>;
+        #clock-cells = <1>;
+    };

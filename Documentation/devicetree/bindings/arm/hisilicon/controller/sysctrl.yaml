@@ -87,6 +87,9 @@ properties:
 
   ranges: true
 
+  clock-controller:
+    $ref: /schemas/clock/hisilicon,sd5116-clk.yaml#
+
   watchdog:
     $ref: /schemas/watchdog/hisilicon,sd5116-wdt.yaml#
 
@@ -153,6 +156,12 @@ examples:
     system-controller@14880000 {
         compatible = "hisilicon,sd5116-sysctrl", "syscon", "simple-mfd";
         reg = <0x14880000 0x1000>;
+
+        clock-controller {
+            compatible = "hisilicon,sd5116-clk";
+            clocks = <&apb_clk>;
+            #clock-cells = <1>;
+        };
 
         watchdog {
             compatible = "hisilicon,sd5116-wdt";
